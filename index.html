@@ -24,20 +24,16 @@
   .api-box { background: var(--bg2); margin: 15px; padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
   .api-box label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px; }
   .api-box input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; font-family: 'DM Mono'; outline: none; }
-  .api-box input:focus { border-color: var(--gold); }
 
   .scan-btn-wrapper { margin: 15px; background: var(--bg2); border: 2px dashed var(--border); border-radius: 15px; padding: 30px; text-align: center; position: relative; cursor: pointer; }
   .scan-btn-wrapper i { font-size: 40px; color: var(--gold); display: block; margin-bottom: 10px; }
-  #camera-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  #camera-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
 
   .form-group { padding: 0 15px; margin-bottom: 15px; }
   .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
   .form-group input, .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 10px; font-size: 15px; outline: none; }
-  .form-group input:focus { border-color: var(--gold); }
   
-  .row { display: flex; gap: 10px; }
-  .btn-save { background: var(--gold); color: black; border: none; width: calc(100% - 30px); margin: 15px; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
-  .btn-save:active { transform: scale(0.98); }
+  .btn-save { background: var(--gold); color: black; border: none; width: calc(100% - 30px); margin: 15px; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
   
   #loading { display: none; text-align: center; margin: 10px; color: var(--gold); font-size: 13px; }
   .spinner { width: 18px; height: 18px; border: 2px solid transparent; border-top: 2px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
@@ -60,7 +56,7 @@
 
 <div id="page-brew">
   <div class="api-box">
-    <label>GOOGLE GEMINI API KEY (v1beta)</label>
+    <label>GOOGLE AI API KEY</label>
     <input type="password" id="api-key" placeholder="AIzaSy..." onchange="saveKey(this.value)">
   </div>
 
@@ -68,29 +64,29 @@
     <input type="file" accept="image/*" capture="environment" id="camera-input" onchange="startScan(this)">
     <i class="ti ti-scan"></i>
     <strong>สแกนหน้าซองกาแฟ</strong>
-    <p style="font-size:12px; color:var(--muted); margin-top:5px;">Gemini AI จะช่วยกรอกข้อมูลอัตโนมัติ</p>
+    <p style="font-size:12px; color:var(--muted); margin-top:5px;">ใช้ Gemini 1.5 Flash วิเคราะห์ข้อมูล</p>
   </div>
 
-  <div id="loading"><div class="spinner"></div> Gemini 1.5 Flash กำลังวิเคราะห์ภาพ...</div>
+  <div id="loading"><div class="spinner"></div> กำลังประมวลผลผ่าน Google AI...</div>
 
   <div class="form-group">
-    <label>ชื่อกาแฟ / แหล่งปลูก</label>
-    <input type="text" id="coffee-name" placeholder="เช่น Ethiopia Sidamo">
+    <label>ชื่อกาแฟ / โรงคั่ว</label>
+    <input type="text" id="coffee-name" placeholder="ชื่อที่ปรากฏบนซอง">
   </div>
 
   <div class="form-group">
     <label>รสชาติ (Tasting Notes)</label>
-    <textarea id="coffee-notes" rows="2" placeholder="เช่น Berry, Floral, Citrus"></textarea>
+    <textarea id="coffee-notes" rows="2" placeholder="เช่น Berry, Chocolate, Nutty"></textarea>
   </div>
 
   <div class="form-group">
-    <div class="row">
+    <div style="display:flex; gap:10px;">
       <div style="flex:1">
-        <label>กาแฟ (กรัม)</label>
+        <label>กาแฟ (g)</label>
         <input type="number" id="dose" value="18">
       </div>
       <div style="flex:1">
-        <label>น้ำรวม (มล.)</label>
+        <label>น้ำรวม (ml)</label>
         <input type="number" id="water" value="250">
       </div>
     </div>
@@ -104,7 +100,6 @@
 </div>
 
 <script>
-  // บันทึก Key ลงเครื่อง
   function saveKey(val) {
     localStorage.setItem('gemini_key', val.trim());
   }
@@ -123,16 +118,12 @@
     if(p === 'history') loadHistory();
   }
 
-  // ฟังก์ชันสแกนหลัก (แก้ไขให้ใช้ v1beta และรุ่น 1.5-flash)
   async function startScan(input) {
     const file = input.files[0];
     if(!file) return;
 
     const apiKey = localStorage.getItem('gemini_key');
-    if(!apiKey) {
-      alert('กรุณาใส่ API Key ก่อนครับ');
-      return;
-    }
+    if(!apiKey) return alert('กรุณาใส่ API Key ก่อนครับ');
 
     document.getElementById('loading').style.display = 'block';
 
@@ -141,24 +132,19 @@
       try {
         const base64Content = reader.result.split(',')[1];
         
-        // ใช้ v1beta endpoint เพื่อรองรับ gemini-1.5-flash
-        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+        // แก้ไข Endpoint เป็น gemini-1.5-flash-latest เพื่อความแน่นอน
+        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
 
         const payload = {
           contents: [{
             parts: [
-              { text: "Extract coffee information from this image. Return ONLY JSON format: {\"name\": \"coffee name/origin\", \"notes\": \"tasting notes\"}. If not found, guess based on visual." },
-              { 
-                inline_data: { 
-                  mime_type: file.type, 
-                  data: base64Content 
-                } 
-              }
+              { text: "Extract coffee details from this image. Output ONLY valid JSON: {\"name\": \"...\", \"notes\": \"...\"}" },
+              { inline_data: { mime_type: file.type, data: base64Content } }
             ]
           }],
           generationConfig: { 
             response_mime_type: "application/json",
-            temperature: 0.1 // ปรับให้นิ่งขึ้น
+            temperature: 0.1
           }
         };
 
@@ -170,41 +156,35 @@
 
         const data = await response.json();
         
-        if (data.error) {
-          throw new Error(data.error.message);
-        }
+        if (data.error) throw new Error(data.error.message);
 
         if (data.candidates && data.candidates[0].content.parts[0].text) {
-          const resultText = data.candidates[0].content.parts[0].text;
-          const result = JSON.parse(resultText);
-          
+          const result = JSON.parse(data.candidates[0].content.parts[0].text);
           document.getElementById('coffee-name').value = result.name || '';
           document.getElementById('coffee-notes').value = result.notes || '';
         } else {
-          throw new Error('ไม่สามารถประมวลผลข้อมูลจากรูปได้ ลองถ่ายให้ชัดขึ้นครับ');
+          throw new Error('AI ไม่สามารถอ่านข้อมูลได้ ลองเปลี่ยนมุมถ่ายภาพ');
         }
       } catch (err) {
         console.error(err);
         alert('สแกนไม่ได้: ' + err.message);
       } finally {
         document.getElementById('loading').style.display = 'none';
-        input.value = ""; // reset input
+        input.value = "";
       }
     };
     reader.readAsDataURL(file);
   }
 
   function saveLog() {
-    const name = document.getElementById('coffee-name').value;
-    if(!name) { alert('ใส่ชื่อกาแฟด้วยจ้า'); return; }
-
     const log = {
-      name,
+      name: document.getElementById('coffee-name').value,
       notes: document.getElementById('coffee-notes').value,
       dose: document.getElementById('dose').value,
       water: document.getElementById('water').value,
       date: new Date().toLocaleString('th-TH')
     };
+    if(!log.name) return alert('ใส่ชื่อกาแฟด้วยจ้า');
 
     const logs = JSON.parse(localStorage.getItem('coffee_logs') || '[]');
     logs.unshift(log);
