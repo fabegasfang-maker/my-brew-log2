@@ -199,7 +199,7 @@ body{background:var(--bg);color:var(--cream);font-family:var(--font-th);min-heig
     <div class="page active" id="page-brew">
 
       <!-- API Key Setup -->
-      <div class="api-banner">
+      <div class="api-banner" id="api-banner" style="transition:border-color 0.3s;">
         <strong>🔑 Anthropic API Key</strong> (สำหรับสแกนซอง OCR)<br>
         ใส่ key เพื่อเปิดใช้งาน AI สแกนอัตโนมัติ — เก็บใน localStorage เครื่องคุณเท่านั้น
         <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." oninput="saveApiKey(this.value)">
@@ -513,15 +513,32 @@ let currentStar = 3;
 let brewType = 'hot';
 let currentModalId = null;
 
-// Init API key
-window.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   const savedKey = localStorage.getItem('brewlog_apikey') || '';
-  if (savedKey) document.getElementById('api-key-input').value = savedKey;
+  const keyInput = document.getElementById('api-key-input');
+  if (keyInput && savedKey) {
+    keyInput.value = savedKey;
+    updateKeyStatus(savedKey);
+  }
   applyLastDefaults();
-});
+}
+
+function updateKeyStatus(val) {
+  const banner = document.getElementById('api-banner');
+  if (!banner) return;
+  banner.style.borderColor = (val && val.startsWith('sk-ant')) ? 'var(--green)' : 'var(--border)';
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 function saveApiKey(val) {
-  localStorage.setItem('brewlog_apikey', val.trim());
+  const clean = val.trim();
+  localStorage.setItem('brewlog_apikey', clean);
+  updateKeyStatus(clean);
 }
 
 function setPage(p) {
@@ -613,13 +630,21 @@ async function handleScan(e) {
         })
       });
       const data = await resp.json();
-      if (data.error) throw new Error(data.error.message);
+      if (data.error) throw new Error(data.error.message || data.error.type);
       const txt = data.content.map(c => c.text || '').join('');
       const clean = txt.replace(/```json|```/g, '').trim();
       const info = JSON.parse(clean);
       populateDetected(info);
     } catch (err) {
-      showToast('⚠️ วิเคราะห์ไม่ได้ — กรอกเองได้เลย');
+      console.error('OCR error:', err);
+      const msg = err.message || 'unknown';
+      if (msg.includes('401') || msg.includes('auth') || msg.includes('invalid_api_key')) {
+        showToast('🔑 API Key ไม่ถูกต้อง — ตรวจสอบอีกครั้ง');
+      } else if (msg.includes('network') || msg.includes('fetch') || msg.includes('Failed')) {
+        showToast('🌐 ไม่มีสัญญาณ internet');
+      } else {
+        showToast('⚠️ สแกนไม่ได้: ' + msg.slice(0, 40));
+      }
       document.getElementById('ocr-processing').style.display = 'none';
       document.getElementById('scan-zone').style.display = 'block';
     }
