@@ -15,32 +15,30 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--cream); font-family: 'Noto Sans Thai', sans-serif; max-width: 420px; margin: 0 auto; padding-bottom: 50px; }
   
-  /* Header & Nav */
   .nav { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid var(--border); }
   .logo { font-family: 'DM Mono', monospace; color: var(--gold); font-size: 1.2rem; }
   .tabs { display: flex; border-bottom: 1px solid var(--border); }
   .tab { flex: 1; text-align: center; padding: 15px; color: var(--muted); cursor: pointer; font-size: 14px; }
   .tab.active { color: var(--gold); border-bottom: 2px solid var(--gold); }
 
-  /* API Banner */
   .api-box { background: var(--bg2); margin: 15px; padding: 15px; border-radius: 12px; border: 1px solid var(--border); }
   .api-box label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 5px; }
-  .api-box input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; font-family: 'DM Mono'; }
+  .api-box input { width: 100%; background: var(--bg); border: 1px solid var(--border); color: white; padding: 8px; border-radius: 6px; font-family: 'DM Mono'; outline: none; }
+  .api-box input:focus { border-color: var(--gold); }
 
-  /* Scan Zone */
-  .scan-btn-wrapper { margin: 15px; background: var(--bg2); border: 2px dashed var(--border); border-radius: 15px; padding: 30px; text-align: center; position: relative; }
+  .scan-btn-wrapper { margin: 15px; background: var(--bg2); border: 2px dashed var(--border); border-radius: 15px; padding: 30px; text-align: center; position: relative; cursor: pointer; }
   .scan-btn-wrapper i { font-size: 40px; color: var(--gold); display: block; margin-bottom: 10px; }
   #camera-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 
-  /* Form */
   .form-group { padding: 0 15px; margin-bottom: 15px; }
   .form-group label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-  .form-group input, .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 10px; font-size: 15px; }
+  .form-group input, .form-group textarea { width: 100%; background: var(--bg2); border: 1px solid var(--border); color: white; padding: 12px; border-radius: 10px; font-size: 15px; outline: none; }
+  .form-group input:focus { border-color: var(--gold); }
   
   .row { display: flex; gap: 10px; }
-  .btn-save { background: var(--gold); color: black; border: none; width: calc(100% - 30px); margin: 15px; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; }
+  .btn-save { background: var(--gold); color: black; border: none; width: calc(100% - 30px); margin: 15px; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s; }
+  .btn-save:active { transform: scale(0.98); }
   
-  /* Status */
   #loading { display: none; text-align: center; margin: 10px; color: var(--gold); font-size: 13px; }
   .spinner { width: 18px; height: 18px; border: 2px solid transparent; border-top: 2px solid var(--gold); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; margin-right: 8px; }
   @keyframes spin { to { transform: rotate(360deg); } }
@@ -52,7 +50,7 @@
 
 <div class="nav">
   <div class="logo">BREWLOG.PRO</div>
-  <i class="ti ti-settings" style="color:var(--muted)"></i>
+  <i class="ti ti-coffee" style="color:var(--gold)"></i>
 </div>
 
 <div class="tabs">
@@ -62,18 +60,18 @@
 
 <div id="page-brew">
   <div class="api-box">
-    <label>GOOGLE GEMINI API KEY</label>
+    <label>GOOGLE GEMINI API KEY (v1beta)</label>
     <input type="password" id="api-key" placeholder="AIzaSy..." onchange="saveKey(this.value)">
   </div>
 
   <div class="scan-btn-wrapper">
     <input type="file" accept="image/*" capture="environment" id="camera-input" onchange="startScan(this)">
-    <i class="ti ti-camera-selfie"></i>
+    <i class="ti ti-scan"></i>
     <strong>สแกนหน้าซองกาแฟ</strong>
-    <p style="font-size:12px; color:var(--muted); margin-top:5px;">AI จะกรอกชื่อและรสชาติให้เอง</p>
+    <p style="font-size:12px; color:var(--muted); margin-top:5px;">Gemini AI จะช่วยกรอกข้อมูลอัตโนมัติ</p>
   </div>
 
-  <div id="loading"><div class="spinner"></div> Gemini กำลังวิเคราะห์ภาพ...</div>
+  <div id="loading"><div class="spinner"></div> Gemini 1.5 Flash กำลังวิเคราะห์ภาพ...</div>
 
   <div class="form-group">
     <label>ชื่อกาแฟ / แหล่งปลูก</label>
@@ -106,13 +104,11 @@
 </div>
 
 <script>
-  // บันทึก API Key ลงเครื่อง
+  // บันทึก Key ลงเครื่อง
   function saveKey(val) {
     localStorage.setItem('gemini_key', val.trim());
-    alert('บันทึก API Key แล้ว');
   }
 
-  // โหลด Key เมื่อเปิดเว็บ
   window.onload = () => {
     const savedKey = localStorage.getItem('gemini_key');
     if(savedKey) document.getElementById('api-key').value = savedKey;
@@ -127,7 +123,7 @@
     if(p === 'history') loadHistory();
   }
 
-  // ฟังก์ชันสแกนด้วย Gemini
+  // ฟังก์ชันสแกนหลัก (แก้ไขให้ใช้ v1beta และรุ่น 1.5-flash)
   async function startScan(input) {
     const file = input.files[0];
     if(!file) return;
@@ -142,20 +138,31 @@
 
     const reader = new FileReader();
     reader.onload = async () => {
-      const base64Content = reader.result.split(',')[1];
-      
-      const payload = {
-        contents: [{
-          parts: [
-            { text: "Extract coffee information from this bag. Return ONLY JSON format: {\"name\": \"...\", \"notes\": \"...\"}. Use English or Thai as appeared on bag." },
-            { inline_data: { mime_type: file.type, data: base64Content } }
-          ]
-        }],
-        generationConfig: { response_mime_type: "application/json" }
-      };
-
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        const base64Content = reader.result.split(',')[1];
+        
+        // ใช้ v1beta endpoint เพื่อรองรับ gemini-1.5-flash
+        const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+
+        const payload = {
+          contents: [{
+            parts: [
+              { text: "Extract coffee information from this image. Return ONLY JSON format: {\"name\": \"coffee name/origin\", \"notes\": \"tasting notes\"}. If not found, guess based on visual." },
+              { 
+                inline_data: { 
+                  mime_type: file.type, 
+                  data: base64Content 
+                } 
+              }
+            ]
+          }],
+          generationConfig: { 
+            response_mime_type: "application/json",
+            temperature: 0.1 // ปรับให้นิ่งขึ้น
+          }
+        };
+
+        const response = await fetch(apiEndpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -163,32 +170,41 @@
 
         const data = await response.json();
         
+        if (data.error) {
+          throw new Error(data.error.message);
+        }
+
         if (data.candidates && data.candidates[0].content.parts[0].text) {
-          const result = JSON.parse(data.candidates[0].content.parts[0].text);
+          const resultText = data.candidates[0].content.parts[0].text;
+          const result = JSON.parse(resultText);
+          
           document.getElementById('coffee-name').value = result.name || '';
           document.getElementById('coffee-notes').value = result.notes || '';
         } else {
-          throw new Error('AI ไม่พบข้อมูล');
+          throw new Error('ไม่สามารถประมวลผลข้อมูลจากรูปได้ ลองถ่ายให้ชัดขึ้นครับ');
         }
       } catch (err) {
         console.error(err);
-        alert('เกิดข้อผิดพลาด: ' + err.message);
+        alert('สแกนไม่ได้: ' + err.message);
       } finally {
         document.getElementById('loading').style.display = 'none';
+        input.value = ""; // reset input
       }
     };
     reader.readAsDataURL(file);
   }
 
   function saveLog() {
+    const name = document.getElementById('coffee-name').value;
+    if(!name) { alert('ใส่ชื่อกาแฟด้วยจ้า'); return; }
+
     const log = {
-      name: document.getElementById('coffee-name').value,
+      name,
       notes: document.getElementById('coffee-notes').value,
       dose: document.getElementById('dose').value,
       water: document.getElementById('water').value,
       date: new Date().toLocaleString('th-TH')
     };
-    if(!log.name) { alert('ใส่ชื่อกาแฟด้วยจ้า'); return; }
 
     const logs = JSON.parse(localStorage.getItem('coffee_logs') || '[]');
     logs.unshift(log);
@@ -204,8 +220,8 @@
       <div class="history-item">
         <small style="color:var(--muted)">${l.date}</small>
         <div style="font-weight:600; font-size:16px; margin:5px 0;">${l.name}</div>
-        <div style="font-size:13px; color:var(--gold)">${l.dose}g / ${l.water}ml (Ratio 1:${(l.water/l.dose).toFixed(1)})</div>
-        <div style="font-size:12px; color:var(--muted); margin-top:5px italic;">${l.notes}</div>
+        <div style="font-size:13px; color:var(--gold)">${l.dose}g / ${l.water}ml (1:${(l.water/l.dose).toFixed(1)})</div>
+        <div style="font-size:12px; color:var(--muted); margin-top:5px;">${l.notes}</div>
       </div>
     `).join('') || '<p style="text-align:center; margin-top:50px; color:var(--muted);">ยังไม่มีประวัติการชง</p>';
   }
